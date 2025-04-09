@@ -1,0 +1,180 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jivas
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jivas
+  template:
+    metadata:
+      labels:
+        app: jivas
+        {{- include "jivas.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: jivas
+          image: "{{ .Values.image.repository }}:{{ tpl .Values.image.tag . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8000
+              name: http
+            - containerPort: 8501
+              name: jvclient
+            - containerPort: 8989
+              name: jvstudio
+          resources:
+            {{- toYaml .Values.jivas.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.jivas.probes.liveness.path }}
+              port: {{ .Values.jivas.probes.liveness.port }}
+            initialDelaySeconds: {{ .Values.jivas.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.jivas.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.jivas.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.jivas.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.jivas.probes.readiness.path }}
+              port: {{ .Values.jivas.probes.readiness.port }}
+            initialDelaySeconds: {{ .Values.jivas.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.jivas.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.jivas.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.jivas.probes.readiness.failureThreshold }}
+          env:
+            - name: DATABASE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: DATABASE_HOST
+            - name: DATABASE_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: DATABASE_NAME
+            - name: JIVAS_ACTIONS_ROOT_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_ACTIONS_ROOT_PATH
+            - name: JIVAS_DESCRIPTOR_ROOT_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_DESCRIPTOR_ROOT_PATH
+            - name: JIVAS_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_USER
+            - name: JIVAS_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_BASE_URL
+            - name: JIVAS_STUDIO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_STUDIO_URL
+            - name: JIVAS_FILES_ROOT_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_FILES_ROOT_PATH
+            - name: JIVAS_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_ENVIRONMENT
+            - name: JIVAS_FILE_INTERFACE
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_FILE_INTERFACE
+            {{- if eq .Values.jivas.config.fileInterface "s3" }}
+            - name: JIVAS_S3_BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_S3_BUCKET_NAME
+            - name: JIVAS_S3_REGION_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_S3_REGION_NAME
+            - name: JIVAS_S3_ACCESS_KEY_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_S3_ACCESS_KEY_ID
+            - name: JIVAS_S3_SECRET_ACCESS_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_S3_SECRET_ACCESS_KEY
+            {{- end }}
+            - name: JIVAS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: jivas-secrets
+                  key: JIVAS_PASSWORD
+            - name: JIVAS_WEBHOOK_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jivas-secrets
+                  key: JIVAS_WEBHOOK_SECRET_KEY
+            - name: TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jivas-secrets
+                  key: JIVAS_TOKEN_SECRET
+            {{- if .Values.optionalServices.typesense.enabled }}
+            - name: TYPESENSE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: TYPESENSE_HOST
+            - name: TYPESENSE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: TYPESENSE_PORT
+            - name: TYPESENSE_PROTOCOL
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: TYPESENSE_PROTOCOL
+            - name: TYPESENSE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: typesense-secrets
+                  key: TYPESENSE_API_KEY
+            - name: TYPESENSE_CONNECTION_TIMEOUT_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: TYPESENSE_CONNECTION_TIMEOUT_SECONDS
+            {{- end }}
+          volumeMounts:
+            - name: jivas-data
+              mountPath: /app/.jvdata
+            - name: jivas-files
+              mountPath: /app/.files
+      volumes:
+        {{- if eq .Values.jivas.config.fileInterface "local" }}
+        - name: jivas-data
+          persistentVolumeClaim:
+            claimName: jivas-data
+        - name: jivas-files
+          persistentVolumeClaim:
+            claimName: fileserver-data
+        {{- else }}
+        - name: jivas-data
+          emptyDir: {}
+        - name: jivas-files
+          emptyDir: {}
+        {{- end }}

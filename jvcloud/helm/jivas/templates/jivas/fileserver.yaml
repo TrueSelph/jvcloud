@@ -1,0 +1,140 @@
+{{- if eq .Values.jivas.config.fileInterface "local" }}
+# File Server Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fileserver
+  labels:
+    app: fileserver
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fileserver
+  template:
+    metadata:
+      labels:
+        app: fileserver
+        {{- include "jivas.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: fileserver
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: files-data
+              mountPath: /usr/share/nginx/html
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+      volumes:
+        - name: files-data
+          persistentVolumeClaim:
+            claimName: fileserver-data
+        - name: nginx-config
+          configMap:
+            name: fileserver-config
+---
+# File Server PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fileserver-data
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.jivas.fileserver.storage | default "0.5Gi" }}
+  storageClassName: {{ .Values.jivas.fileserver.storageClassName | default "gp2" }}
+---
+# JVDATA PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jivas-data
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.jivas.fileserver.storage | default "0.5Gi" }}
+  storageClassName: {{ .Values.jivas.fileserver.storageClassName | default "gp2" }}
+---
+# File Server ConfigMap for nginx configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fileserver-config
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+data:
+  default.conf: |
+    server {
+      listen 80;
+      server_name _;
+      
+      location / {
+        root /usr/share/nginx/html;
+        autoindex on;
+        add_header Access-Control-Allow-Origin '*';
+        add_header Access-Control-Allow-Methods 'GET, OPTIONS';
+        add_header Access-Control-Allow-Headers 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
+      }
+    }
+---
+# File Server Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: fileserver
+  labels:
+    app: fileserver
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: fileserver
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+# File Server Ingress
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fileserver-ingress
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.aws.certificateArn }}
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.aws.certificateArn | quote }}
+    {{- end }}
+    {{- if .Values.aws.alb.group.enabled }}
+    alb.ingress.kubernetes.io/group.name: {{ tpl .Values.aws.alb.group.nameFormat . | quote }}
+    {{- end }}
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - host: "{{ .Release.Namespace }}-files.{{ .Values.domain.name }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: fileserver
+                port:
+                  number: 80
+{{- end }}
+{{- end }}

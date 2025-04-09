@@ -1,0 +1,122 @@
+{{- if .Values.optionalServices.wppconnect.enabled }}
+# First create the secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wppconnect-secrets
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+type: Opaque
+data:
+  SECRET_KEY: {{ default (randAlphaNum 32) .Values.optionalServices.wppconnect.secretKey | b64enc }}
+---
+# Then create the StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: wppconnect
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  serviceName: wppconnect
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wppconnect
+  template:
+    metadata:
+      labels:
+        app: wppconnect
+        {{- include "jivas.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: wppconnect
+          image: {{ .Values.optionalServices.wppconnect.image | default "registry.v75inc.dev/wppconnect/wppconnect_prod:latest" }}
+          ports:
+            - containerPort: 21465
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: wppconnect-secrets
+                  key: SECRET_KEY
+          volumeMounts:
+            - name: wppconnect-tokens
+              mountPath: /usr/src/wpp-server/tokens
+            - name: wppconnect-user-data
+              mountPath: /usr/src/wpp-server/userDataDir
+  volumeClaimTemplates:
+    - metadata:
+        name: wppconnect-tokens
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.optionalServices.wppconnect.storage.tokens }}
+        storageClassName: {{ .Values.optionalServices.wppconnect.storageClassName }}
+    - metadata:
+        name: wppconnect-user-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.optionalServices.wppconnect.storage.userData }}
+        storageClassName: {{ .Values.optionalServices.wppconnect.storageClassName }}
+---
+# Finally create the Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: wppconnect
+  labels:
+    app: wppconnect
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 21465
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 21465
+  selector:
+    app: wppconnect
+  type: ClusterIP
+---
+# Create ingress if enabled
+{{- if and .Values.ingress.enabled .Values.optionalServices.wppconnect.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wppconnect-ingress
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.aws.certificateArn }}
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.aws.certificateArn | quote }}
+    {{- end }}
+    {{- if .Values.aws.alb.group.enabled }}
+    alb.ingress.kubernetes.io/group.name: {{ tpl .Values.aws.alb.group.nameFormat . | quote }}
+    {{- end }}
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - host: {{ tpl .Values.optionalServices.wppconnect.ingress.hostFormat . | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wppconnect
+                port:
+                  number: 80
+{{- end }}
+{{- end }}

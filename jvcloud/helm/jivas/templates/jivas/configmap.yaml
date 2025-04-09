@@ -1,0 +1,51 @@
+{{- if empty .Values.domain.name }}
+{{- fail "domain.name is required. Please set this value in your values.yaml or use --set domain.name=yourdomain.com" }}
+{{- end }}
+
+{{- if eq .Values.jivas.config.fileInterface "s3" }}
+  {{- if empty .Values.jivas.config.s3.bucketName }}
+    {{- fail "jivas.config.s3.bucketName is required when fileInterface is set to s3" }}
+  {{- end }}
+  {{- if empty .Values.jivas.config.s3.regionName }}
+    {{- fail "jivas.config.s3.regionName is required when fileInterface is set to s3" }}
+  {{- end }}
+  {{- if empty .Values.jivas.config.s3.accessKeyId }}
+    {{- fail "jivas.config.s3.accessKeyId is required when fileInterface is set to s3" }}
+  {{- end }}
+  {{- if empty .Values.jivas.config.s3.secretAccessKey }}
+    {{- fail "jivas.config.s3.secretAccessKey is required when fileInterface is set to s3" }}
+  {{- end }}
+{{- end }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jivas-config
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+data:
+  DATABASE_HOST: "mongodb://mongodb-0.mongodb-headless.{{ .Release.Namespace }}.svc.cluster.local:27017,mongodb-1.mongodb-headless.{{ .Release.Namespace }}.svc.cluster.local:27017/?replicaSet=rs0"
+  DATABASE_NAME: {{ .Values.mongodb.databaseName | quote }}
+  JIVAS_ENVIRONMENT: {{ .Values.jivas.config.environment | quote }}
+  JIVAS_ACTIONS_ROOT_PATH: {{ .Values.jivas.config.actionsRootPath | quote }}
+  JIVAS_DESCRIPTOR_ROOT_PATH: {{ .Values.jivas.config.descriptorRootPath | quote }}
+  JIVAS_USER: "{{ .Release.Namespace }}@{{ .Values.domain.name }}"
+  JIVAS_BASE_URL: "https://{{ .Release.Namespace }}-jivas.{{ .Values.domain.name }}"
+  JIVAS_STUDIO_URL: "https://{{ .Release.Namespace }}-jvstudio.{{ .Values.domain.name }}"
+  {{- if eq .Values.jivas.config.fileInterface "local" }}
+  JIVAS_FILES_URL: "https://{{ .Release.Namespace }}-files.{{ .Values.domain.name }}"
+  {{- end }}
+  JIVAS_FILES_ROOT_PATH: {{ .Values.jivas.config.filesRootPath | quote }}
+  JIVAS_FILE_INTERFACE: {{ .Values.jivas.config.fileInterface | quote }}
+  {{- if eq .Values.jivas.config.fileInterface "s3" }}
+  JIVAS_S3_BUCKET_NAME: {{ .Values.jivas.config.s3.bucketName | quote }}
+  JIVAS_S3_REGION_NAME: {{ .Values.jivas.config.s3.regionName | quote }}
+  JIVAS_S3_ACCESS_KEY_ID: {{ .Values.jivas.config.s3.accessKeyId | quote }}
+  JIVAS_S3_SECRET_ACCESS_KEY: {{ .Values.jivas.config.s3.secretAccessKey | quote }}
+  {{- end }}
+  {{- if .Values.optionalServices.typesense.enabled }}
+  TYPESENSE_HOST: "typesense.{{ .Release.Namespace }}.svc.cluster.local"
+  TYPESENSE_PORT: {{ .Values.optionalServices.typesense.port | quote }}
+  TYPESENSE_PROTOCOL: {{ .Values.optionalServices.typesense.protocol | quote }}
+  TYPESENSE_CONNECTION_TIMEOUT_SECONDS: {{ .Values.optionalServices.typesense.connectionTimeoutSeconds | quote }}
+  {{- end }}

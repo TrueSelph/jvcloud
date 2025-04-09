@@ -1,0 +1,187 @@
+# Domain configuration (REQUIRED)
+domain:
+  # You MUST set this to your actual domain
+  name: ""  # e.g. example.com
+
+# MongoDB Configuration
+mongodb:
+  databaseName: "jivas"
+  replicas: 2
+  storage: "10Gi"
+  storageClassName: "gp2"
+
+# JIVAS Configuration
+jivas:
+  version: "latest"
+  secrets:
+    # These will be randomly generated if not provided
+    password: ""
+    webhookSecretKey: ""
+    tokenSecret: ""
+  config:
+    # Root path for actions
+    actionsRootPath: "actions"
+    # Root path for descriptors
+    descriptorRootPath: ".jvdata"
+    # File interface type: "s3" or "local"
+    # If set to "s3", you MUST also configure the s3 section below
+    fileInterface: "local"  # Default to local for safety
+    # Root path for files
+    filesRootPath: ".files"
+    # Environment mode (development or production)
+    environment: "production"
+    # S3 configuration (REQUIRED when fileInterface is "s3")
+    s3:
+      # S3 bucket name
+      bucketName: ""
+      # AWS region for the S3 bucket
+      regionName: ""
+      # AWS access key with permissions to the bucket
+      accessKeyId: ""
+      # AWS secret access key
+      secretAccessKey: ""
+    # File server configuration (if fileInterface is "local")
+    fileserver:
+      # Storage size for the file server
+      storage: "0.5Gi"
+      # Storage class name for the file server
+      storageClassName: "gp2"
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  probes:
+    liveness:
+      path: "/healthz"
+      port: 8000
+      initialDelaySeconds: 120
+      periodSeconds: 15
+      timeoutSeconds: 5
+      failureThreshold: 6
+    readiness:
+      path: "/healthz"
+      port: 8000
+      initialDelaySeconds: 60
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 6
+
+# Optional services configuration
+optionalServices:
+  typesense:
+    enabled: false
+    port: "8108"
+    protocol: "http"
+    connectionTimeoutSeconds: "5"
+    storage: "5Gi"
+    storageClassName: "gp2"
+  wppconnect:
+    enabled: false
+    # Optionally override the image
+    # image: registry.v75inc.dev/wppconnect/wppconnect_prod:latest
+    # Secret key for WPPConnect (random if not provided)
+    # secretKey: ""
+    storage:
+      tokens: "0.2Gi"
+      userData: "1Gi"
+    storageClassName: "gp2"
+    # WPPConnect ingress configuration 
+    ingress:
+      enabled: true
+      hostFormat: "{{ .Release.Namespace }}-wppconnect.{{ .Values.domain.name }}"
+
+# Update the image section to use the JIVAS image
+image:
+  repository: trueselph/jivas
+  pullPolicy: IfNotPresent
+  tag: "{{ .Values.jivas.version }}"
+
+# Update service to match JIVAS requirements
+service:
+  type: ClusterIP
+  ports:
+    http:
+      port: 80
+      targetPort: 8000
+    https:
+      port: 443
+      targetPort: 8000
+    jvclient:
+      port: 8501
+      targetPort: 8501
+    jvstudio:
+      port: 8989
+      targetPort: 8989
+
+aws:
+  # ALB configuration
+  alb:
+    # Group name configuration for sharing ALBs
+    group:
+      # Enable ALB grouping (set to false to use dedicated ALB)
+      enabled: true
+      # Group name format - supports templating
+      # Common patterns:
+      # - "shared" (single ALB for all deployments)
+      # - "{{ .Release.Namespace }}-alb" (one ALB per namespace)
+      # - "{{ .Values.environment }}-services" (one ALB per environment)
+      nameFormat: "jivas-services"
+  # Certificate ARN for HTTPS
+  certificateArn: ""
+  # DNS configuration
+  dns:
+    enabled: true
+    hostnameFormat: "{{ .Release.Namespace }}.{{ .Values.domain.name }}"
+
+# Ingress configuration
+ingress:
+  # Enable ingress resource creation
+  enabled: true
+  # Ingress class name
+  className: "alb"
+  # Common annotations for all ingress rules
+  annotations:
+    alb.ingress.kubernetes.io/scheme: "internet-facing"
+    alb.ingress.kubernetes.io/target-type: "ip"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+  # Service-specific ingress rules
+  services:
+    # Main JIVAS API
+    jivas:
+      enabled: true
+      # Host format - uses Release.Namespace and domain.name
+      hostFormat: "{{ .Release.Namespace }}-jivas.{{ .Values.domain.name }}"
+      port: 80  # Service port to route traffic to
+      # Additional annotations specific to this service
+      annotations: {}
+    # JIVAS Client UI
+    jvclient:
+      enabled: true
+      hostFormat: "{{ .Release.Namespace }}-jvclient.{{ .Values.domain.name }}"
+      port: 8501
+      annotations: {}
+    # JIVAS Studio
+    jvstudio:
+      enabled: true
+      hostFormat: "{{ .Release.Namespace }}-jvstudio.{{ .Values.domain.name }}"
+      port: 8989
+      annotations: {}
+  # Additional custom hosts if needed
+  extraHosts: []
+
+# Autoscaling configuration
+autoscaling:
+  # Enable autoscaling for the JIVAS deployment
+  enabled: true
+  # Minimum number of replicas
+  minReplicas: 1
+  # Maximum number of replicas
+  maxReplicas: 5
+  # Target CPU utilization percentage
+  targetCPUUtilizationPercentage: 70
+  # Target memory utilization percentage (uncomment to enable)
+  # targetMemoryUtilizationPercentage: 80

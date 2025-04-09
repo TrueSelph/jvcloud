@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongo-init
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "jivas.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: mongo-init
+          image: mongo
+          command:
+            - sh
+            - -c
+            - |
+              echo "Starting MongoDB replica set initialization..."
+
+              # Wait for mongodb-0 to be ready
+              echo "Waiting for mongodb-0 to be ready..."
+              until mongosh --host mongodb-0.mongodb-headless.{{ .Release.Namespace }}.svc.cluster.local --eval "db.runCommand({ ping: 1 })" > /dev/null 2>&1; do
+                echo "mongodb-0 is not ready yet. Retrying in 5 seconds..."
+                sleep 5
+              done
+              echo "mongodb-0 is ready!"
+
+              # Wait for mongodb-1 to be ready
+              echo "Waiting for mongodb-1 to be ready..."
+              until mongosh --host mongodb-1.mongodb-headless.{{ .Release.Namespace }}.svc.cluster.local --eval "db.runCommand({ ping: 1 })" > /dev/null 2>&1; do
+                echo "mongodb-1 is not ready yet. Retrying in 5 seconds..."
+                sleep 5
+              done
+              echo "mongodb-1 is ready!"
+
+              echo "All replicas are ready. Proceeding with replica set initialization..."
+
+              # Initialize the replica set
+              mongosh --host mongodb-0.mongodb-headless.{{ .Release.Namespace }}.svc.cluster.local <<EOF
+              rs.initiate({
+                _id: 'rs0',
+                members: [
+                  { _id: 0, host: "mongodb-0.mongodb-headless.{{ .Release.Namespace }}.svc.cluster.local:27017" },
+                  { _id: 1, host: "mongodb-1.mongodb-headless.{{ .Release.Namespace }}.svc.cluster.local:27017" }
+                ]
+              })
+              EOF
+
+              echo "Replica set initialization complete."
+      restartPolicy: OnFailure

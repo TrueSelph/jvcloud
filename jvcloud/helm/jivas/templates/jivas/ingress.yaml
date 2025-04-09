@@ -1,0 +1,78 @@
+{{- if and .Values.ingress.enabled .Values.domain.name }}
+{{- if empty .Values.aws.certificateArn }}
+{{- fail "aws.certificateArn is required for ALB ingress. Please set this value in your values.yaml" }}
+{{- end }}
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jivas-ingress
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.aws.certificateArn }}
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.aws.certificateArn | quote }}
+    {{- end }}
+    {{- if .Values.aws.alb.group.enabled }}
+    alb.ingress.kubernetes.io/group.name: {{ tpl .Values.aws.alb.group.nameFormat . | quote }}
+    {{- end }}
+    {{- if and .Values.aws.dns.enabled .Values.aws.dns.hostnameFormat }}
+    external-dns.alpha.kubernetes.io/hostname: {{ tpl .Values.aws.dns.hostnameFormat . | quote }}
+    {{- end }}
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    {{- if .Values.ingress.services.jivas.enabled }}
+    - host: {{ tpl .Values.ingress.services.jivas.hostFormat . | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jivas
+                port:
+                  number: {{ .Values.ingress.services.jivas.port }}
+    {{- end }}
+    {{- if .Values.ingress.services.jvclient.enabled }}
+    - host: {{ tpl .Values.ingress.services.jvclient.hostFormat . | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jivas
+                port:
+                  number: {{ .Values.ingress.services.jvclient.port }}
+    {{- end }}
+    {{- if .Values.ingress.services.jvstudio.enabled }}
+    - host: {{ tpl .Values.ingress.services.jvstudio.hostFormat . | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jivas
+                port:
+                  number: {{ .Values.ingress.services.jvstudio.port }}
+    {{- end }}
+    {{- range .Values.ingress.extraHosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType | default "Prefix" }}
+            backend:
+              service:
+                name: {{ .service.name }}
+                port:
+                  number: {{ .service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

@@ -3,6 +3,25 @@ entries:
   jvcloud:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2025-04-10T07:13:19.361396453Z"
+    description: A Helm chart for deploying JIVAS application and its related services
+    digest: 17b62ebcdfab880e78e131f1dec28bfe09d5254b71a43cfc3cb3ee89c5ae21b6
+    home: https://github.com/TrueSelph/jvcloud
+    keywords:
+    - jivas
+    - trueselph
+    - jvcloud
+    - kubernetes
+    maintainers:
+    - email: admin@trueselph.com
+      name: TrueSelph Inc
+    name: jvcloud
+    type: application
+    urls:
+    - https://github.com/TrueSelph/jvcloud/releases/download/jvcloud-0.0.3/jvcloud-0.0.3.tgz
+    version: 0.0.3
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2025-04-09T09:49:30.962127537Z"
     description: A Helm chart for deploying JIVAS application and its related services
     digest: cb873102fe3c7d9ff305ee081953dad465ff1433f10bfe826ebdbc30162256f7
@@ -20,4 +39,4 @@ entries:
     urls:
     - https://github.com/TrueSelph/jvcloud/releases/download/jvcloud-0.0.2/jvcloud-0.0.2.tgz
     version: 0.0.2
-generated: "2025-04-09T09:49:30.962133248Z"
+generated: "2025-04-10T07:13:19.361404558Z"

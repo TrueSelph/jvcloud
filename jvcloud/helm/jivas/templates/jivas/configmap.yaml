@@ -49,3 +49,6 @@ data:
   TYPESENSE_PROTOCOL: {{ .Values.optionalServices.typesense.protocol | quote }}
   TYPESENSE_CONNECTION_TIMEOUT_SECONDS: {{ .Values.optionalServices.typesense.connectionTimeoutSeconds | quote }}
   {{- end }}
+  {{- if .Values.optionalServices.wppconnect.enabled }}
+  WPP_API_URL: "https://{{ tpl .Values.optionalServices.wppconnect.ingress.hostFormat . }}"
+  {{- end }}

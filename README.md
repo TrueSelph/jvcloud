@@ -160,6 +160,7 @@ helm install my-jivas ./jvcloud/helm/jvcloud \
 | `optionalServices.wppconnect.storageClassName` | Storage class for WPPConnect | `gp2` | No |
 | `optionalServices.wppconnect.ingress.enabled` | Enable WPPConnect ingress | `true` | No |
 | `optionalServices.wppconnect.ingress.hostFormat` | Host format for WPPConnect | `{{ .Release.Namespace }}-wppconnect.{{ .Values.domain.name }}` | No |
+| `optionalServices.wppconnect.secretKey` | Secret key for WPPConnect (random if empty) | `""` | No |
 
 ### Autoscaling Configuration
 

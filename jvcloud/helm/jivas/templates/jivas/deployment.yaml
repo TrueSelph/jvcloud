@@ -159,6 +159,18 @@ spec:
                   name: jivas-config
                   key: TYPESENSE_CONNECTION_TIMEOUT_SECONDS
             {{- end }}
+            {{- if .Values.optionalServices.wppconnect.enabled }}
+            - name: WPP_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: WPP_API_URL
+            - name: WPP_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: wppconnect-secrets
+                  key: SECRET_KEY
+            {{- end }}
           volumeMounts:
             - name: jivas-data
               mountPath: /app/.jvdata

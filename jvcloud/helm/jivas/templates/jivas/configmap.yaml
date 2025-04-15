@@ -46,7 +46,7 @@ data:
   {{- if .Values.optionalServices.redis.enabled }}
   REDIS_HOST: "redis://redis.{{ .Release.Namespace }}.svc.cluster.local"
   REDIS_PORT: {{ .Values.optionalServices.redis.port | quote }}
-  REDIS_USER: {{ .Values.optionalServices.redis.user | quote }}
+  REDIS_USER: "default"
   {{- end }}
   {{- if .Values.optionalServices.typesense.enabled }}
   TYPESENSE_HOST: "typesense.{{ .Release.Namespace }}.svc.cluster.local"

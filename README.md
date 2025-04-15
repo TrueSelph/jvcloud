@@ -167,7 +167,6 @@ helm install my-jivas ./jvcloud/helm/jvcloud \
 | Parameter | Description | Default | Required |
 |-----------|-------------|---------|----------|
 | `optionalServices.redis.enabled` | Enable Redis service | `false` | No |
-| `optionalServices.redis.user` | Redis username | `default` | No |
 | `optionalServices.redis.port` | Redis port | `6379` | No |
 | `optionalServices.redis.replicas` | Number of Redis replicas | `1` | No |
 | `optionalServices.redis.storage` | Storage size for Redis | `1Gi` | No |

@@ -1,0 +1,80 @@
+{{- if .Values.optionalServices.redis.enabled }}
+# First create the secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secrets
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+type: Opaque
+data:
+  REDIS_PASSWORD: {{ default (randAlphaNum 32) .Values.optionalServices.redis.secrets.password | b64enc }}
+---
+# Then create the StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+        {{- include "jivas.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: redis
+          image: bitnami/redis:7.4.2
+          ports:
+            - containerPort: {{ .Values.optionalServices.redis.port }}
+          env:
+            - name: REDIS_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: REDIS_USER
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: REDIS_PASSWORD
+            - name: REDIS_PORT_NUMBER
+              value: "{{ .Values.optionalServices.redis.port }}"
+            - name: REDIS_DATA_DIR
+              value: "/data"
+          volumeMounts:
+            - name: redis-persistent-storage
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-persistent-storage
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: {{ .Values.optionalServices.redis.storageClassName }}
+        resources:
+          requests:
+            storage: {{ .Values.optionalServices.redis.storage }}
+---
+# And finally create the Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    app: redis
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: redis
+  ports:
+    - protocol: TCP
+      port: {{ .Values.optionalServices.redis.port }}
+      targetPort: {{ .Values.optionalServices.redis.port }}
+  type: ClusterIP
+{{- end }}

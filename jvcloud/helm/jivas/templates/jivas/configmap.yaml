@@ -43,7 +43,7 @@ data:
   JIVAS_S3_ACCESS_KEY_ID: {{ .Values.jivas.config.s3.accessKeyId | quote }}
   JIVAS_S3_SECRET_ACCESS_KEY: {{ .Values.jivas.config.s3.secretAccessKey | quote }}
   {{- end }}
-  REDIS_HOST: "redis.{{ .Release.Namespace }}.svc.cluster.local"
+  REDIS_HOST: "redis://redis.{{ .Release.Namespace }}.svc.cluster.local"
   REDIS_PORT: {{ .Values.redis.port | quote }}
   REDIS_USER: {{ .Values.redis.user | quote }}
   {{- if .Values.optionalServices.typesense.enabled }}

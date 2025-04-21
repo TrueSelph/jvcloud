@@ -82,6 +82,14 @@ helm install my-jivas ./jvcloud/helm/jvcloud \
 | `mongodb.storage` | MongoDB storage size | `10Gi` | No |
 | `mongodb.storageClassName` | Storage class for MongoDB | `gp2` | No |
 
+### Redis Configuration
+
+| Parameter | Description | Default | Required |
+|-----------|-------------|---------|----------|
+| `redis.user` | Redis username | `default` | No |
+| `redis.port` | Redis port | `6379` | No |
+| `redis.password` | Password for Redis (random if empty) | `""` | No |
+
 ### JIVAS Application Settings
 
 | Parameter | Description | Default | Required |
@@ -132,9 +140,9 @@ helm install my-jivas ./jvcloud/helm/jvcloud \
 | Parameter | Description | Default | Required |
 |-----------|-------------|---------|----------|
 | `jivas.resources.requests.memory` | Memory request for JIVAS | `512Mi` | No |
-| `jivas.resources.requests.cpu` | CPU request for JIVAS | `250m` | No |
+| `jivas.resources.requests.cpu` | CPU request for JIVAS | `1000m` | No |
 | `jivas.resources.limits.memory` | Memory limit for JIVAS | `1Gi` | No |
-| `jivas.resources.limits.cpu` | CPU limit for JIVAS | `500m` | No |
+| `jivas.resources.limits.cpu` | CPU limit for JIVAS | `1500m` | No |
 
 ### Optional Services
 

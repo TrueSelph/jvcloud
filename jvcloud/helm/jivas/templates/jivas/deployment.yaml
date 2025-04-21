@@ -132,6 +132,26 @@ spec:
                 secretKeyRef:
                   name: jivas-secrets
                   key: JIVAS_TOKEN_SECRET
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: REDIS_PORT
+            - name: REDIS_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: REDIS_USER
+            - name: REDIS_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: REDIS_PASSWORD
             {{- if .Values.optionalServices.typesense.enabled }}
             - name: TYPESENSE_HOST
               valueFrom:

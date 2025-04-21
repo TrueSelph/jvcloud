@@ -1,0 +1,70 @@
+# Redis Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secrets
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+type: Opaque
+data:
+  REDIS_PASSWORD: {{ default (randAlphaNum 32) .Values.redis.password | b64enc }}
+---
+# Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  labels:
+    app: redis
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+        {{- include "jivas.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: redis
+          image: bitnami/redis:7.4.2
+          ports:
+            - containerPort: {{ .Values.redis.port }}
+          env:
+            - name: REDIS_USER
+              value: {{ .Values.redis.user | quote }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: REDIS_PASSWORD
+            - name: REDIS_PORT_NUMBER
+              value: "{{ .Values.redis.port }}"
+            - name: REDIS_DATA_DIR
+              value: "/data"
+          volumeMounts:
+            - name: redis-storage
+              mountPath: /data
+      volumes:
+        - name: redis-storage
+          emptyDir: {}
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    app: redis
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: redis
+  ports:
+    - protocol: TCP
+      port: {{ .Values.redis.port }}
+      targetPort: {{ .Values.redis.port }}
+  type: ClusterIP

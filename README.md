@@ -82,6 +82,14 @@ helm install my-jivas ./jvcloud/helm/jvcloud \
 | `mongodb.storage` | MongoDB storage size | `10Gi` | No |
 | `mongodb.storageClassName` | Storage class for MongoDB | `gp2` | No |
 
+### Redis Configuration
+
+| Parameter | Description | Default | Required |
+|-----------|-------------|---------|----------|
+| `redis.user` | Redis username | `default` | No |
+| `redis.port` | Redis port | `6379` | No |
+| `redis.password` | Password for Redis (random if empty) | `""` | No |
+
 ### JIVAS Application Settings
 
 | Parameter | Description | Default | Required |

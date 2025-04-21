@@ -1,7 +1,7 @@
 # Domain configuration (REQUIRED)
 domain:
   # You MUST set this to your actual domain
-  name: ""  # e.g. example.com
+  name: "" # e.g. example.com
 
 # MongoDB Configuration
 mongodb:
@@ -9,6 +9,13 @@ mongodb:
   replicas: 2
   storage: "10Gi"
   storageClassName: "gp2"
+
+# Redis Configuration
+redis:
+  user: "default"
+  port: "6379"
+  # Password for Redis (randomly generated if empty)
+  password: ""
 
 # JIVAS Configuration
 jivas:
@@ -25,7 +32,7 @@ jivas:
     descriptorRootPath: ".jvdata"
     # File interface type: "s3" or "local"
     # If set to "s3", you MUST also configure the s3 section below
-    fileInterface: "local"  # Default to local for safety
+    fileInterface: "local" # Default to local for safety
     # Root path for files
     filesRootPath: ".files"
     # Environment mode (development or production)
@@ -88,7 +95,7 @@ optionalServices:
       tokens: "0.2Gi"
       userData: "1Gi"
     storageClassName: "gp2"
-    # WPPConnect ingress configuration 
+    # WPPConnect ingress configuration
     ingress:
       enabled: true
       hostFormat: "{{ .Release.Namespace }}-wppconnect.{{ .Values.domain.name }}"
@@ -155,7 +162,7 @@ ingress:
       enabled: true
       # Host format - uses Release.Namespace and domain.name
       hostFormat: "{{ .Release.Namespace }}-jivas.{{ .Values.domain.name }}"
-      port: 80  # Service port to route traffic to
+      port: 80 # Service port to route traffic to
       # Additional annotations specific to this service
       annotations: {}
     # JIVAS Client UI

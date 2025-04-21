@@ -185,7 +185,7 @@ spec:
                 configMapKeyRef:
                   name: jivas-config
                   key: WPP_API_URL
-            - name: WPP_MASTER_KEY
+            - name: WPP_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: wppconnect-secrets

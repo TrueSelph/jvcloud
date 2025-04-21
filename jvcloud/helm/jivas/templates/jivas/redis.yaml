@@ -1,5 +1,4 @@
-{{- if .Values.optionalServices.redis.enabled }}
-# First create the secret
+# Redis Secret
 apiVersion: v1
 kind: Secret
 metadata:
@@ -8,14 +7,15 @@ metadata:
     {{- include "jivas.labels" . | nindent 4 }}
 type: Opaque
 data:
-  REDIS_PASSWORD: {{ default (randAlphaNum 32) .Values.optionalServices.redis.secrets.password | b64enc }}
+  REDIS_PASSWORD: {{ default (randAlphaNum 32) .Values.redis.password | b64enc }}
 ---
-# Then create the StatefulSet
+# Redis Deployment
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: redis
   labels:
+    app: redis
     {{- include "jivas.labels" . | nindent 4 }}
 spec:
   replicas: 1
@@ -32,36 +32,27 @@ spec:
         - name: redis
           image: bitnami/redis:7.4.2
           ports:
-            - containerPort: {{ .Values.optionalServices.redis.port }}
+            - containerPort: {{ .Values.redis.port }}
           env:
             - name: REDIS_USER
-              valueFrom:
-                configMapKeyRef:
-                  name: jivas-config
-                  key: REDIS_USER
+              value: {{ .Values.redis.user | quote }}
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: redis-secrets
                   key: REDIS_PASSWORD
             - name: REDIS_PORT_NUMBER
-              value: "{{ .Values.optionalServices.redis.port }}"
+              value: "{{ .Values.redis.port }}"
             - name: REDIS_DATA_DIR
               value: "/data"
           volumeMounts:
-            - name: redis-persistent-storage
+            - name: redis-storage
               mountPath: /data
-  volumeClaimTemplates:
-    - metadata:
-        name: redis-persistent-storage
-      spec:
-        accessModes: [ "ReadWriteOnce" ]
-        storageClassName: {{ .Values.optionalServices.redis.storageClassName }}
-        resources:
-          requests:
-            storage: {{ .Values.optionalServices.redis.storage }}
+      volumes:
+        - name: redis-storage
+          emptyDir: {}
 ---
-# And finally create the Service
+# Redis Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -74,7 +65,6 @@ spec:
     app: redis
   ports:
     - protocol: TCP
-      port: {{ .Values.optionalServices.redis.port }}
-      targetPort: {{ .Values.optionalServices.redis.port }}
+      port: {{ .Values.redis.port }}
+      targetPort: {{ .Values.redis.port }}
   type: ClusterIP
-{{- end }}

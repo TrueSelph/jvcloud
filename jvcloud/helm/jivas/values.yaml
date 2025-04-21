@@ -10,6 +10,13 @@ mongodb:
   storage: "10Gi"
   storageClassName: "gp2"
 
+# Redis Configuration
+redis:
+  user: "default"
+  port: "6379"
+  # Password for Redis (randomly generated if empty)
+  password: ""
+
 # JIVAS Configuration
 jivas:
   version: "latest"
@@ -78,15 +85,6 @@ optionalServices:
     connectionTimeoutSeconds: "5"
     storage: "5Gi"
     storageClassName: "gp2"
-  redis:
-    enabled: false
-    user: "default"
-    port: "6379"
-    replicas: 1
-    storage: "1Gi"
-    storageClassName: "gp2"
-    secrets:
-      password: ""
   wppconnect:
     enabled: false
     # Optionally override the image

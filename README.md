@@ -82,6 +82,14 @@ helm install my-jivas ./jvcloud/helm/jvcloud \
 | `mongodb.storage` | MongoDB storage size | `10Gi` | No |
 | `mongodb.storageClassName` | Storage class for MongoDB | `gp2` | No |
 
+### Redis Configuration
+
+| Parameter | Description | Default | Required |
+|-----------|-------------|---------|----------|
+| `redis.user` | Redis username | `default` | No |
+| `redis.port` | Redis port | `6379` | No |
+| `redis.password` | Password for Redis (random if empty) | `""` | No |
+
 ### JIVAS Application Settings
 
 | Parameter | Description | Default | Required |
@@ -161,17 +169,6 @@ helm install my-jivas ./jvcloud/helm/jvcloud \
 | `optionalServices.wppconnect.ingress.enabled` | Enable WPPConnect ingress | `true` | No |
 | `optionalServices.wppconnect.ingress.hostFormat` | Host format for WPPConnect | `{{ .Release.Namespace }}-wppconnect.{{ .Values.domain.name }}` | No |
 | `optionalServices.wppconnect.secretKey` | Secret key for WPPConnect (random if empty) | `""` | No |
-
-#### Redis
-
-| Parameter | Description | Default | Required |
-|-----------|-------------|---------|----------|
-| `optionalServices.redis.enabled` | Enable Redis service | `false` | No |
-| `optionalServices.redis.port` | Redis port | `6379` | No |
-| `optionalServices.redis.replicas` | Number of Redis replicas | `1` | No |
-| `optionalServices.redis.storage` | Storage size for Redis | `1Gi` | No |
-| `optionalServices.redis.storageClassName` | Storage class for Redis | `gp2` | No |
-| `optionalServices.redis.secrets.password` | Password for Redis (random if empty) | `""` | No |
 
 ### Autoscaling Configuration
 

@@ -7,7 +7,22 @@ metadata:
     {{- include "jivas.labels" . | nindent 4 }}
 type: Opaque
 data:
-  REDIS_PASSWORD: {{ default (randAlphaNum 32) .Values.redis.password | b64enc }}
+  {{- $redisPasswordKey := "REDIS_PASSWORD" }}
+  {{- $redisPassword := "" }}
+  
+  {{- /* Try to get the existing secret password */ -}}
+  {{- $existingSecret := (lookup "v1" "Secret" .Release.Namespace "redis-secrets") }}
+  {{- if and $existingSecret $existingSecret.data $existingSecret.data.REDIS_PASSWORD }}
+    {{- /* Use the existing password if it exists */ -}}
+    {{- $redisPassword = $existingSecret.data.REDIS_PASSWORD }}
+  {{- else if .Values.redis.password }}
+    {{- /* Use the specified password if provided */ -}}
+    {{- $redisPassword = (.Values.redis.password | b64enc) }}
+  {{- else }}
+    {{- /* Generate a new random password as last resort */ -}}
+    {{- $redisPassword = (randAlphaNum 32 | b64enc) }}
+  {{- end }}
+  REDIS_PASSWORD: {{ $redisPassword }}
 ---
 # Redis Deployment
 apiVersion: apps/v1

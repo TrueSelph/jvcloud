@@ -8,7 +8,21 @@ metadata:
     {{- include "jivas.labels" . | nindent 4 }}
 type: Opaque
 data:
-  SECRET_KEY: {{ default (randAlphaNum 32) .Values.optionalServices.wppconnect.secretKey | b64enc }}
+  {{- $secretKey := "" }}
+  
+  {{- /* Try to get the existing secret key */ -}}
+  {{- $existingSecret := (lookup "v1" "Secret" .Release.Namespace "wppconnect-secrets") }}
+  {{- if and $existingSecret $existingSecret.data $existingSecret.data.SECRET_KEY }}
+    {{- /* Use the existing secret key if it exists */ -}}
+    {{- $secretKey = $existingSecret.data.SECRET_KEY }}
+  {{- else if .Values.optionalServices.wppconnect.secretKey }}
+    {{- /* Use the specified secret key if provided */ -}}
+    {{- $secretKey = (.Values.optionalServices.wppconnect.secretKey | b64enc) }}
+  {{- else }}
+    {{- /* Generate a new random secret key as last resort */ -}}
+    {{- $secretKey = (randAlphaNum 32 | b64enc) }}
+  {{- end }}
+  SECRET_KEY: {{ $secretKey }}
 ---
 # Then create the StatefulSet
 apiVersion: apps/v1

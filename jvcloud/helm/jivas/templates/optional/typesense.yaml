@@ -8,7 +8,21 @@ metadata:
     {{- include "jivas.labels" . | nindent 4 }}
 type: Opaque
 data:
-  TYPESENSE_API_KEY: {{ default (randAlphaNum 32) .Values.optionalServices.typesense.apiKey | b64enc }}
+  {{- $typesenseApiKey := "" }}
+  
+  {{- /* Try to get the existing secret API key */ -}}
+  {{- $existingSecret := (lookup "v1" "Secret" .Release.Namespace "typesense-secrets") }}
+  {{- if and $existingSecret $existingSecret.data $existingSecret.data.TYPESENSE_API_KEY }}
+    {{- /* Use the existing API key if it exists */ -}}
+    {{- $typesenseApiKey = $existingSecret.data.TYPESENSE_API_KEY }}
+  {{- else if .Values.optionalServices.typesense.apiKey }}
+    {{- /* Use the specified API key if provided */ -}}
+    {{- $typesenseApiKey = (.Values.optionalServices.typesense.apiKey | b64enc) }}
+  {{- else }}
+    {{- /* Generate a new random API key as last resort */ -}}
+    {{- $typesenseApiKey = (randAlphaNum 32 | b64enc) }}
+  {{- end }}
+  TYPESENSE_API_KEY: {{ $typesenseApiKey }}
 ---
 # Then create the StatefulSet
 apiVersion: apps/v1

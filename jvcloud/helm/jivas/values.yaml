@@ -56,10 +56,10 @@ jivas:
   resources:
     requests:
       memory: "512Mi"
-      cpu: "300m"
+      cpu: "500m"
     limits:
       memory: "1Gi"
-      cpu: "600m"
+      cpu: "1000m"
   probes:
     liveness:
       path: "/healthz"

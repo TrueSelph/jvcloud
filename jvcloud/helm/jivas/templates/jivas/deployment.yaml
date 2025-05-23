@@ -26,6 +26,8 @@ spec:
               name: jvclient
             - containerPort: 8989
               name: jvstudio
+            - containerPort: 9000
+              name: jvfileserve
           resources:
             {{- toYaml .Values.jivas.resources | nindent 12 }}
           livenessProbe:
@@ -80,6 +82,11 @@ spec:
                 configMapKeyRef:
                   name: jivas-config
                   key: JIVAS_STUDIO_URL
+            - name: JIVAS_FILES_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_FILES_URL
             - name: JIVAS_FILES_ROOT_PATH
               valueFrom:
                 configMapKeyRef:

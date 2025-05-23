@@ -122,6 +122,9 @@ service:
     jvstudio:
       port: 8989
       targetPort: 8989
+    jvfileserve:
+      port: 9000
+      targetPort: 9000
 
 aws:
   # ALB configuration
@@ -176,6 +179,12 @@ ingress:
       enabled: true
       hostFormat: "{{ .Release.Namespace }}-jvstudio.{{ .Values.domain.name }}"
       port: 8989
+      annotations: {}
+    # JIVAS Studio
+    jvfileserve:
+      enabled: true
+      hostFormat: "{{ .Release.Namespace }}-files.{{ .Values.domain.name }}"
+      port: 9000
       annotations: {}
   # Additional custom hosts if needed
   extraHosts: []

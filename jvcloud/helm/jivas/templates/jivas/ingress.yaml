@@ -61,6 +61,18 @@ spec:
                 port:
                   number: {{ .Values.ingress.services.jvstudio.port }}
     {{- end }}
+    {{- if .Values.ingress.services.jvfileserve.enabled }}
+    - host: {{ tpl .Values.ingress.services.jvfileserve.hostFormat . | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jivas
+                port:
+                  number: {{ .Values.ingress.services.jvfileserve.port }}
+    {{- end }}
     {{- range .Values.ingress.extraHosts }}
     - host: {{ .host | quote }}
       http:

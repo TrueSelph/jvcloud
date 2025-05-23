@@ -33,3 +33,9 @@ spec:
       targetPort: {{ .Values.service.ports.jvstudio.targetPort }}
       protocol: TCP
     {{- end }}
+    {{- if .Values.service.ports.jvfileserve }}
+    - name: jvfileserve
+      port: {{ .Values.service.ports.jvfileserve.port }}
+      targetPort: {{ .Values.service.ports.jvfileserve.targetPort }}
+      protocol: TCP
+    {{- end }}

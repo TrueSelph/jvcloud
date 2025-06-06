@@ -55,11 +55,11 @@ jivas:
       storageClassName: "gp2"
   resources:
     requests:
-      memory: "512Mi"
-      cpu: "500m"
-    limits:
       memory: "1Gi"
       cpu: "1000m"
+    limits:
+      memory: "2Gi"
+      cpu: "2000m"
   probes:
     liveness:
       path: "/healthz"

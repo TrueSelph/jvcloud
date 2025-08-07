@@ -49,6 +49,18 @@ spec:
                 port:
                   number: {{ .Values.ingress.services.jvclient.port }}
     {{- end }}
+    {{- if .Values.ingress.services.jvmanager.enabled }}
+    - host: {{ tpl .Values.ingress.services.jvmanager.hostFormat . | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jivas
+                port:
+                  number: {{ .Values.ingress.services.jvmanager.port }}
+    {{- end }}
     {{- if .Values.ingress.services.jvstudio.enabled }}
     - host: {{ tpl .Values.ingress.services.jvstudio.hostFormat . | quote }}
       http:

@@ -48,5 +48,12 @@ spec:
               })
               EOF
 
-              echo "Replica set initialization complete."
+              echo "Replica set initialization complete. Waiting for PRIMARY to be elected..."
+
+              until mongosh --host mongodb-0.mongodb-headless.{{ .Release.Namespace }}.svc.cluster.local --eval "rs.isMaster().ismaster" | grep true > /dev/null 2>&1; do
+                echo "Still waiting for PRIMARY..."
+                sleep 5
+              done
+
+              echo "Replica set PRIMARY is ready. Init job complete."
       restartPolicy: OnFailure

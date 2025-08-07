@@ -32,11 +32,13 @@ jivas:
     descriptorRootPath: ".jvdata"
     # File interface type: "s3" or "local"
     # If set to "s3", you MUST also configure the s3 section below
-    fileInterface: "local" # Default to local for safety
+    fileInterface: "none" # Default to local for safety
     # Root path for files
     filesRootPath: ".files"
     # Environment mode (development or production)
     environment: "production"
+    port: 8000
+    host: 0.0.0.0
     # S3 configuration (REQUIRED when fileInterface is "s3")
     s3:
       # S3 bucket name
@@ -119,6 +121,9 @@ service:
     jvclient:
       port: 8501
       targetPort: 8501
+    jvmanager:
+      port: 8990
+      targetPort: 8990
     jvstudio:
       port: 8989
       targetPort: 8989
@@ -170,19 +175,24 @@ ingress:
       annotations: {}
     # JIVAS Client UI
     jvclient:
-      enabled: true
+      enabled: false
       hostFormat: "{{ .Release.Namespace }}-jvclient.{{ .Values.domain.name }}"
       port: 8501
       annotations: {}
+    jvmanager:
+      enabled: false
+      hostFormat: "{{ .Release.Namespace }}-manager.{{ .Values.domain.name }}"
+      port: 8990
+      annotations: {}
     # JIVAS Studio
     jvstudio:
-      enabled: true
+      enabled: false
       hostFormat: "{{ .Release.Namespace }}-jvstudio.{{ .Values.domain.name }}"
       port: 8989
       annotations: {}
     # JIVAS Studio
     jvfileserve:
-      enabled: true
+      enabled: false
       hostFormat: "{{ .Release.Namespace }}-files.{{ .Values.domain.name }}"
       port: 9000
       annotations: {}

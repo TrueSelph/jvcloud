@@ -15,6 +15,20 @@ spec:
         app: jivas
         {{- include "jivas.selectorLabels" . | nindent 8 }}
     spec:
+      initContainers:
+        - name: wait-for-mongo-primary
+          image: mongo
+          command:
+            - sh
+            - -c
+            - |
+              echo "[wait-for-mongo-primary] Waiting for PRIMARY to be elected..."
+              until mongosh --host mongodb-0.mongodb-headless.{{ .Release.Namespace }}.svc.cluster.local \
+                            --eval 'rs.isMaster().ismaster' | grep true > /dev/null 2>&1; do
+                echo "[wait-for-mongo-primary] Not ready yet. Retrying in 5 seconds..."
+                sleep 5
+              done
+              echo "[wait-for-mongo-primary] PRIMARY is ready!"
       containers:
         - name: jivas
           image: "{{ .Values.image.repository }}:{{ tpl .Values.image.tag . }}"
@@ -24,6 +38,8 @@ spec:
               name: http
             - containerPort: 8501
               name: jvclient
+            - containerPort: 8990
+              name: jvmanager
             - containerPort: 8989
               name: jvstudio
             - containerPort: 9000
@@ -97,6 +113,16 @@ spec:
                 configMapKeyRef:
                   name: jivas-config
                   key: JIVAS_ENVIRONMENT
+            - name: JIVAS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_HOST
+            - name: JIVAS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_PORT
             - name: JIVAS_FILE_INTERFACE
               valueFrom:
                 configMapKeyRef:

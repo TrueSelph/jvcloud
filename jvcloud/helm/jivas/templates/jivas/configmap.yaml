@@ -27,6 +27,8 @@ data:
   DATABASE_HOST: "mongodb://mongodb-0.mongodb-headless.{{ .Release.Namespace }}.svc.cluster.local:27017,mongodb-1.mongodb-headless.{{ .Release.Namespace }}.svc.cluster.local:27017/?replicaSet=rs0"
   DATABASE_NAME: {{ .Values.mongodb.databaseName | quote }}
   JIVAS_ENVIRONMENT: {{ .Values.jivas.config.environment | quote }}
+  JIVAS_HOST: {{ .Values.jivas.config.host | quote }}
+  JIVAS_PORT: {{ .Values.jivas.config.port | quote }}
   JIVAS_ACTIONS_ROOT_PATH: {{ .Values.jivas.config.actionsRootPath | quote }}
   JIVAS_DESCRIPTOR_ROOT_PATH: {{ .Values.jivas.config.descriptorRootPath | quote }}
   JIVAS_USER: "{{ .Release.Namespace }}@{{ .Values.domain.name }}"

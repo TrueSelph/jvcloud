@@ -27,6 +27,12 @@ spec:
       targetPort: {{ .Values.service.ports.jvclient.targetPort }}
       protocol: TCP
     {{- end }}
+    {{- if .Values.service.ports.jvmanager }}
+    - name: jvmanager
+      port: {{ .Values.service.ports.jvmanager.port }}
+      targetPort: {{ .Values.service.ports.jvmanager.targetPort }}
+      protocol: TCP
+    {{- end }}
     {{- if .Values.service.ports.jvstudio }}
     - name: jvstudio
       port: {{ .Values.service.ports.jvstudio.port }}

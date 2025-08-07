@@ -1,4 +1,4 @@
-# Domain configuration (REQUIRED)
+# Domain configuration (REQUIRED!)
 domain:
   # You MUST set this to your actual domain
   name: "" # e.g. example.com

@@ -1,4 +1,4 @@
-# Domain configuration (REQUIRED)
+# Domain configuration (REQUIRED!)
 domain:
   # You MUST set this to your actual domain
   name: "" # e.g. example.com
@@ -32,7 +32,7 @@ jivas:
     descriptorRootPath: ".jvdata"
     # File interface type: "s3" or "local"
     # If set to "s3", you MUST also configure the s3 section below
-    fileInterface: "none" # Default to local for safety
+    fileInterface: "local" # Default to local for safety
     # Root path for files
     filesRootPath: ".files"
     # Environment mode (development or production)

@@ -34,9 +34,10 @@ data:
   JIVAS_USER: "{{ .Release.Namespace }}@{{ .Values.domain.name }}"
   JIVAS_BASE_URL: "https://{{ .Release.Namespace }}-jivas.{{ .Values.domain.name }}"
   JIVAS_STUDIO_URL: "https://{{ .Release.Namespace }}-jvstudio.{{ .Values.domain.name }}"
-  JIVAS_FILES_URL: "https://{{ .Release.Namespace }}-files.{{ .Values.domain.name }}"
+  JIVAS_FILES_URL: "https://{{ .Release.Namespace }}-jivas.{{ .Values.domain.name }}/files"
+  JIVAS_FILES_SHORT_URL: "https://{{ .Release.Namespace }}-jivas.{{ .Values.domain.name }}/f"
   {{- if eq .Values.jivas.config.fileInterface "local" }}
-  JIVAS_FILES_URL: "https://{{ .Release.Namespace }}-files.{{ .Values.domain.name }}"
+  JIVAS_FILES_URL: "https://{{ .Release.Namespace }}-jivas.{{ .Values.domain.name }}/files"
   {{- end }}
   JIVAS_FILES_ROOT_PATH: {{ .Values.jivas.config.filesRootPath | quote }}
   JIVAS_FILE_INTERFACE: {{ .Values.jivas.config.fileInterface | quote }}

@@ -103,6 +103,11 @@ spec:
                 configMapKeyRef:
                   name: jivas-config
                   key: JIVAS_FILES_URL
+            - name: JIVAS_FILES_SHORT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: jivas-config
+                  key: JIVAS_FILES_SHORT_URL
             - name: JIVAS_FILES_ROOT_PATH
               valueFrom:
                 configMapKeyRef:

@@ -22,13 +22,14 @@ spec:
             - sh
             - -c
             - |
-              echo "[wait-for-mongo-primary] Waiting for PRIMARY to be elected..."
+              echo "[wait-for-mongo-primary] Waiting for healthy PRIMARY to be available..."
               until mongosh --host mongodb-0.mongodb-headless.{{ .Release.Namespace }}.svc.cluster.local \
-                            --eval 'rs.isMaster().ismaster' | grep true > /dev/null 2>&1; do
-                echo "[wait-for-mongo-primary] Not ready yet. Retrying in 5 seconds..."
+                            --eval 'rs.status().members.find(m => m.state === 1 && m.health === 1)' \
+                            --quiet | grep -v null > /dev/null 2>&1; do
+                echo "[wait-for-mongo-primary] No healthy PRIMARY found. Retrying in 5 seconds..."
                 sleep 5
               done
-              echo "[wait-for-mongo-primary] PRIMARY is ready!"
+              echo "[wait-for-mongo-primary] Healthy PRIMARY is ready!"
       containers:
         - name: jivas
           image: "{{ .Values.image.repository }}:{{ tpl .Values.image.tag . }}"

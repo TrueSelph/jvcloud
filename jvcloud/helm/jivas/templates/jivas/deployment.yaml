@@ -15,6 +15,8 @@ spec:
         app: jivas
         {{- include "jivas.selectorLabels" . | nindent 8 }}
     spec:
+      securityContext:
+        fsGroup: 1000
       initContainers:
         - name: wait-for-mongo-primary
           image: mongo
@@ -231,21 +233,9 @@ spec:
                   key: SECRET_KEY
             {{- end }}
           volumeMounts:
-            - name: jivas-data
-              mountPath: /app/.jvdata
-            - name: jivas-files
-              mountPath: /app/.files
+            - name: jivas-shared-actions
+              mountPath: /app/actions
       volumes:
-        {{- if eq .Values.jivas.config.fileInterface "local" }}
-        - name: jivas-data
+        - name: jivas-shared-actions
           persistentVolumeClaim:
-            claimName: jivas-data
-        - name: jivas-files
-          persistentVolumeClaim:
-            claimName: fileserver-data
-        {{- else }}
-        - name: jivas-data
-          emptyDir: {}
-        - name: jivas-files
-          emptyDir: {}
-        {{- end }}
+            claimName: jivas-shared-pvc

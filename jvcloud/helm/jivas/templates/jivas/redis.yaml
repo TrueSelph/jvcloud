@@ -9,7 +9,7 @@ type: Opaque
 data:
   {{- $redisPasswordKey := "REDIS_PASSWORD" }}
   {{- $redisPassword := "" }}
-  
+
   {{- /* Try to get the existing secret password */ -}}
   {{- $existingSecret := (lookup "v1" "Secret" .Release.Namespace "redis-secrets") }}
   {{- if and $existingSecret $existingSecret.data $existingSecret.data.REDIS_PASSWORD }}
@@ -45,7 +45,7 @@ spec:
     spec:
       containers:
         - name: redis
-          image: bitnami/redis:7.4.2
+          image: redis:7.4.2
           ports:
             - containerPort: {{ .Values.redis.port }}
           env:

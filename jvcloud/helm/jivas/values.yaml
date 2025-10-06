@@ -39,6 +39,10 @@ jivas:
     environment: "production"
     port: 8000
     host: 0.0.0.0
+    healthmonitor:
+      enabled: true
+      agents:
+          disabled: ""
     # S3 configuration (REQUIRED when fileInterface is "s3")
     s3:
       # S3 bucket name

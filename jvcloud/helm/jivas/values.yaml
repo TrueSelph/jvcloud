@@ -109,6 +109,8 @@ optionalServices:
     databaseUrl: "postgresql://tschat:tschat@tschat-pg:5432/tschat"
     # Optionally override the image
     # image: registry.v75inc.dev/tschat/tschat:latest
+    # Secret key for encrypting whatsapp totp (random if not provided)
+    # secretKey:
     storage:
       tokens: "0.2Gi"
       userData: "1Gi"

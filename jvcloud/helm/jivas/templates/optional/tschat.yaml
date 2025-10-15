@@ -61,10 +61,26 @@ metadata:
     {{- include "jivas.labels" . | nindent 4 }}
 type: Opaque
 data:
+	{{- $secretKey := "" }}
+
+  {{- /* Try to get the existing secret key */ -}}
+  {{- $existingSecret := (lookup "v1" "Secret" .Release.Namespace "tschat-secrets") }}
+  {{- if and $existingSecret $existingSecret.data $existingSecret.data.SECRET_KEY }}
+    {{- /* Use the existing secret key if it exists */ -}}
+    {{- $secretKey = $existingSecret.data.SECRET_KEY }}
+  {{- else if .Values.optionalServices.tschat.secretKey }}
+    {{- /* Use the specified secret key if provided */ -}}
+    {{- $secretKey = (.Values.optionalServices.tschat.secretKey | toString | regexFind "^[0-9a-fA-F]+$" | b64enc) }}
+  {{- else }}
+    {{- /* Generate a new random hex secret key as last resort */ -}}
+    {{- $secretKey = (printf "%032x%032x" (randInt 0 999999999999) (randInt 0 999999999999) | b64enc) }}
+  {{- end }}
+
   WA_INSTANCE_PASSWORD: {{ .Values.optionalServices.tschat.waInstancePassword | b64enc }}
   WA_INSTANCE_EMAIL: {{ .Values.optionalServices.tschat.waInstanceEmail | b64enc }}
   WA_INSTANCE_URL: {{ .Values.optionalServices.tschat.waInstanceUrl | b64enc }}
   DATABASE_URL: {{ .Values.optionalServices.tschat.databaseUrl | b64enc }}
+  ENCRYPTION_SECRET: {{ $secretKey }}
 ---
 # Then create the StatefulSet
 apiVersion: apps/v1
@@ -111,6 +127,20 @@ spec:
                 secretKeyRef:
                   name: tschat-secrets
                   key: DATABASE_URL
+            - name: ENCRYPTION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tschat-secrets
+                  key: ENCRYPTION_SECRET
+            - name: JIVAS_HOST
+              value: "https://{{ .Release.Namespace }}-jivas.{{ .Values.domain.name }}"
+            - name: JIVAS_EMAIL
+              value: "{{ .Release.Namespace }}@{{ .Values.domain.name }}"
+            - name: JIVAS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: jivas-secrets
+                  key: JIVAS_PASSWORD
 ---
 # Finally create the Service
 apiVersion: v1

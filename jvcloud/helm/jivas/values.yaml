@@ -101,6 +101,22 @@ optionalServices:
     ingress:
       enabled: true
       hostFormat: "{{ .Release.Namespace }}-wppconnect.{{ .Values.domain.name }}"
+  tschat:
+    enabled: false
+    waInstanceUrl: ""
+    waInstanceEmail: ""
+    waInstancePassword: ""
+    databaseUrl: "postgresql://tschat:tschat@tschat-pg:5432/tschat"
+    # Optionally override the image
+    # image: registry.v75inc.dev/tschat/tschat:latest
+    storage:
+      tokens: "0.2Gi"
+      userData: "1Gi"
+    storageClassName: "gp2"
+    # WPPConnect ingress configuration
+    ingress:
+      enabled: true
+      hostFormat: "{{ .Release.Namespace }}-tschat.{{ .Values.domain.name }}"
 
 # Update the image section to use the JIVAS image
 image:

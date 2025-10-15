@@ -1,0 +1,169 @@
+{{- if .Values.optionalServices.tschat.enabled }}
+# First create postgres service
+apiVersion: v1
+kind: Service
+metadata:
+  name: tschat-pg
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    app: tschat-pg
+  type: ClusterIP
+---
+# Then create postgres deployment
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: tschat-pg
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  serviceName: tschat-pg
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tschat-pg
+  template:
+    metadata:
+      labels:
+        app: tschat-pg
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:13-alpine
+          env:
+            - name: POSTGRES_DB
+              value: tschat
+            - name: POSTGRES_USER
+              value: tschat
+            - name: POSTGRES_PASSWORD
+              value: tschat
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          emptyDir: {}
+---
+# Create the secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tschat-secrets
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+type: Opaque
+data:
+  WA_INSTANCE_PASSWORD: {{ .Values.optionalServices.tschat.waInstancePassword | b64enc }}
+  WA_INSTANCE_EMAIL: {{ .Values.optionalServices.tschat.waInstanceEmail | b64enc }}
+  WA_INSTANCE_URL: {{ .Values.optionalServices.tschat.waInstanceUrl | b64enc }}
+  DATABASE_URL: {{ .Values.optionalServices.tschat.databaseUrl | b64enc }}
+---
+# Then create the StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: tschat
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  serviceName: tschat
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tschat
+  template:
+    metadata:
+      labels:
+        app: tschat
+        {{- include "jivas.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: tschat
+          image: {{ .Values.optionalServices.tschat.image | default "registry.v75inc.dev/tschat/tschat:latest" }}
+          ports:
+            - containerPort: 3000
+          env:
+            - name: WA_INSTANCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: tschat-secrets
+                  key: WA_INSTANCE_URL
+            - name: WA_INSTANCE_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: tschat-secrets
+                  key: WA_INSTANCE_EMAIL
+            - name: WA_INSTANCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tschat-secrets
+                  key: WA_INSTANCE_PASSWORD
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: tschat-secrets
+                  key: DATABASE_URL
+---
+# Finally create the Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: tschat
+  labels:
+    app: tschat
+    {{- include "jivas.labels" . | nindent 4 }}
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 3000
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 3000
+  selector:
+    app: tschat
+  type: ClusterIP
+---
+# Create ingress if enabled
+{{- if and .Values.ingress.enabled .Values.optionalServices.tschat.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tschat-ingress
+  labels:
+    {{- include "jivas.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.aws.certificateArn }}
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.aws.certificateArn | quote }}
+    {{- end }}
+    {{- if .Values.aws.alb.group.enabled }}
+    alb.ingress.kubernetes.io/group.name: {{ tpl .Values.aws.alb.group.nameFormat . | quote }}
+    {{- end }}
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - host: {{ tpl .Values.optionalServices.tschat.ingress.hostFormat . | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tschat
+                port:
+                  number: 80
+{{- end }}
+{{- end }}
